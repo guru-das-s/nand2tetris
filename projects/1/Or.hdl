@@ -11,5 +11,8 @@ CHIP Or {
     OUT out;
 
     PARTS:
-    //// Replace this comment with your code.
+    /* A || B = !(!A && !B)) */
+    Not(in=a, out=NOTa);
+    Not(in=b, out=NOTb);
+    Nand(a=NOTa, b=NOTb, out=out);
 }
