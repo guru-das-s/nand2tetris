@@ -13,6 +13,16 @@ CHIP Mux4Way16 {
     IN a[16], b[16], c[16], d[16], sel[2];
     OUT out[16];
     
+    /*
+     * out[i] = (a[i] && !sel[0] &&  !sel[1]) ||
+     *          (b[i] && !sel[0] &&   sel[1]) ||
+     *          (c[i] &&  sel[0] &&  !sel[1]) ||
+     *          (d[i] &&  sel[0] &&   sel[1])
+     *
+     * Or, have a three 16-bit MUX design as follows.
+     */
     PARTS:
-    //// Replace this comment with your code.
+     Mux16(a=a, b=b, sel=sel[0], out=MUXab);
+     Mux16(a=c, b=d, sel=sel[0], out=MUXcd);
+     Mux16(a=MUXab, b=MUXcd, sel=sel[1], out=out);
 }
