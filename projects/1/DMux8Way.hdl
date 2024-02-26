@@ -18,5 +18,19 @@ CHIP DMux8Way {
     OUT a, b, c, d, e, f, g, h;
 
     PARTS:
-    //// Replace this comment with your code.
+    Not(in=sel[2], out=NOTsel2);
+    /*
+     * Do DMux4Way of both the same way, but zero out one depending on sel bits.
+     */
+    DMux4Way(in=in, sel=sel[0..1], a=Da, b=Db, c=Dc, d=Dd);
+    And(a=Da, b=NOTsel2, out=a);
+    And(a=Db, b=NOTsel2, out=b);
+    And(a=Dc, b=NOTsel2, out=c);
+    And(a=Dd, b=NOTsel2, out=d);
+
+    DMux4Way(in=in, sel=sel[0..1], a=De, b=Df, c=Dg, d=Dh);
+    And(a=De, b=sel[2], out=e);
+    And(a=Df, b=sel[2], out=f);
+    And(a=Dg, b=sel[2], out=g);
+    And(a=Dh, b=sel[2], out=h);
 }
