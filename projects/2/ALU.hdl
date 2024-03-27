@@ -60,5 +60,40 @@ CHIP ALU {
 
     /* Optionally negate the output */
     Not16(in=o, out=NOTo);
-    Mux16(a=o, b=NOTo, sel=no, out=out);
+
+    /* Set ng and agonizingly separate out into its bits for computing zr */
+    Mux16(a=o, b=NOTo, sel=no, out=out, out[15]=ng,
+                                        out[0]=o0,
+                                        out[1]=o1,
+                                        out[2]=o2,
+                                        out[3]=o3,
+                                        out[4]=o4,
+                                        out[5]=o5,
+                                        out[6]=o6,
+                                        out[7]=o7,
+                                        out[8]=o8,
+                                        out[9]=o9,
+                                        out[10]=o10,
+                                        out[11]=o11,
+                                        out[12]=o12,
+                                        out[13]=o13,
+                                        out[14]=o14,
+                                        out[15]=o15);
+
+    Or(a=o0,   b=o1,  out=zr0);
+    Or(a=zr0,  b=o2,  out=zr1);
+    Or(a=zr1,  b=o3,  out=zr2);
+    Or(a=zr2,  b=o4,  out=zr3);
+    Or(a=zr3,  b=o5,  out=zr4);
+    Or(a=zr4,  b=o6,  out=zr5);
+    Or(a=zr5,  b=o7,  out=zr6);
+    Or(a=zr6,  b=o8,  out=zr7);
+    Or(a=zr7,  b=o9,  out=zr8);
+    Or(a=zr8,  b=o10, out=zr9);
+    Or(a=zr9,  b=o11, out=zr10);
+    Or(a=zr10, b=o12, out=zr11);
+    Or(a=zr11, b=o13, out=zr12);
+    Or(a=zr12, b=o14, out=zr13);
+    Or(a=zr13, b=o15, out=zr14);
+    Not(in=zr14, out=zr);
 }
