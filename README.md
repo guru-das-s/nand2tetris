@@ -10,4 +10,5 @@ gates as a building block and slowly build upon each other to finally allow for
 running rich and complex full-featured programs such as Tetris.
 
 The project homepage forbids public distribution of the code so as to not rob other
-students of the joy of self-learning and so this repository shall remain private.
+students of the joy of self-learning, but that is really up to the students
+themselves; so this repository is public.
