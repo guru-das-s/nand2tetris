@@ -10,9 +10,26 @@
  * else              out(t+1) = out(t)
  */
 CHIP PC {
-    IN in(16),inc, load, reset;
-    OUT out(16);
+    IN in[16],inc, load, reset;
+    OUT out[16];
     
     PARTS:
-    //// Replace this comment with your code.
+    Not(in=inc, out=NOTinc);
+    Not(in=load, out=NOTload);
+    Not(in=reset, out=NOTreset);
+
+    And(a=NOTreset, b=load, out=selload);
+
+    And(a=NOTreset, b=NOTload, out=x);
+    And(a=x, b=inc, out=selinc);
+
+    Mux16(a=counterout, b=false, sel=reset, out=resetout);
+    Mux16(a=resetout, b=in, sel=selload, out=loadout);
+    Inc16(in=counterout, out=incremented);
+    Mux16(a=loadout, b=incremented, sel=selinc, out=input);
+
+    Or(a=reset, b=load, out=resetORload);
+    Or(a=resetORload, b=inc, out=resetORloadORinc);
+
+    Register(in=input, load=resetORloadORinc, out=out, out=counterout);
 }
