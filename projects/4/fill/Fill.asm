@@ -8,4 +8,29 @@
 // i.e. writes "black" in every pixel. When no key is pressed, 
 // the screen should be cleared.
 
-//// Replace this comment with your code.
+@i
+M=0
+
+@colour
+M=0        // Default colour is white
+
+(LOOP)
+@i
+D=M
+@SCREEN
+A=A+D      // A = (base + i)
+M=-1
+
+@i
+M=M+1      // i++
+
+@i
+D=M
+@8192
+D=D-A
+@LOOP
+D;JLT
+
+(END)
+@END
+0;JMP
