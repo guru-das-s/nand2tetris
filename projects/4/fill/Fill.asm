@@ -8,18 +8,38 @@
 // i.e. writes "black" in every pixel. When no key is pressed, 
 // the screen should be cleared.
 
-@i
+@i         // Reset i = 0
 M=0
 
-@colour
-M=0        // Default colour is white
+@screeni
+M=0
 
 (LOOP)
+@KBD
+D=M
+
+@colour
+M=-1       // Default colour is black
+
+@PAINT
+D;JGT      // If key is pressed, colour should be black, start painting
+
+@colour    // else, colour is white
+M=0
+
+(PAINT)
 @i
 D=M
 @SCREEN
-A=A+D      // A = (base + i)
-M=-1
+D=D+A      // D = (base + i)
+@screeni
+M=D        // screeni = (base + i)
+
+@colour
+D=M
+@screeni   // Pointer, bro!
+A=M
+M=D        // D has to contain colour
 
 @i
 M=M+1      // i++
@@ -28,9 +48,11 @@ M=M+1      // i++
 D=M
 @8192
 D=D-A
-@LOOP
+@PAINT
 D;JLT
 
-(END)
-@END
+@i         // Reset i = 0
+M=0
+
+@LOOP
 0;JMP
