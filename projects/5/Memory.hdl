@@ -25,5 +25,29 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-	//// Replace this comment with your code.
+	DMux8Way(in=true, sel=address[12..14], a=a, b=b, c=c, d=d, e=e,
+	                                       f=f, g=g, h=h);
+
+	/* Need to ensure that h is unset */
+	Not(in=h, out=NOTh);
+
+	/* Make firstFour */
+	Or(a=a, b=b, out=x);
+	Or(a=x, b=c, out=xx);
+	Or(a=xx, b=d, out=xxx);
+	And(a=xxx, b=NOTh, out=xxxx);
+	And(a=xxxx, b=load, out=firstFour);
+
+	/* Make nextTwo */
+	Or(a=e, b=f, out=y);
+	And(a=y, b=NOTh, out=yy);
+	And(a=yy, b=load, out=nextTwo);
+
+	RAM16K(in=in, load=firstFour, address=address[0..13], out=RAMout);
+	Screen(in=in, load=nextTwo, address=address[0..12], out=Screenout);
+	Keyboard(out=Keyout);
+
+	Mux8Way16(a=RAMout, b=RAMout, c=RAMout, d=RAMout,
+		  e=Screenout, f=Screenout, g=Keyout, h=true, /* h = invalid output */
+		  sel=address[12..14], out=out);
 }
