@@ -32,5 +32,67 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-	//// Replace this comment with your code.
+	Mux16(a=instruction, b=outMcopy, sel=instruction[15], out=Ain);
+
+	Not(in=instruction[15], out=NOTmsb);
+	Or(a=NOTmsb, b=instruction[5], out=loadA);
+	ARegister(in=Ain, load=loadA, out=Aout, out[0..14]=addressM);
+	DRegister(in=outMcopy, load=instruction[4], out=x);
+	Mux16(a=Aout, b=inM, sel=instruction[12], out=y);
+	ALU(x=x, y=y,
+	    zx=instruction[11], nx=instruction[10], zy=instruction[9],
+	    ny=instruction[8], f=instruction[7], no=instruction[6],
+	    out=outM, out=outMcopy, zr=zr, ng=ng);
+
+	And(a=instruction[3], b=instruction[15], out=writeM);
+
+	Not(in=zr, out=NOTzr);
+	Not(in=ng, out=NOTng);
+
+	DMux8Way(in=true, sel=instruction[0..2],
+	         a=nojmp, b=jgt, c=jeq, d=jge,
+	         e=jlt, f=jne, g=jle, h=jmp);
+
+	// NOJMP handling
+	// Just ignore it.
+
+	// JGT handling
+	And(a=NOTzr, b=NOTng, out=nn);
+	And(a=jgt, b=nn, out=JGTout);
+
+	// JEQ handling
+	And(a=jeq, b=zr, out=JEQout);
+
+	// JGE handling
+	And(a=jge, b=NOTng, out=JGEout);
+
+	// JLT handling
+	And(a=ng, b=NOTzr, out=nn1);
+	And(a=jlt, b=nn1, out=JLTout);
+
+	// JNE handling
+	And(a=jne, b=NOTzr, out=JNEout);
+
+	// JLE handling
+	Or(a=ng, b=zr, out=nn2);
+	And(a=jle, b=nn2, out=JLEout);
+
+	// JMP handling
+	// Include it directly
+
+	// To jump, or not to jump?
+	Or8Way(in[7]=false, in[6]=JGTout,
+	       in[5]=JEQout, in[4]=JGEout,
+	       in[3]=JLTout, in[2]=JNEout,
+	       in[1]=JLEout, in[0]=jmp,
+	       out=jump0);
+
+	// Make sure we're jumping on a C-instruction, not A
+	And(a=jump0, b=instruction[15], out=jump);
+
+	// If we're not jumping, we need to increment PC
+	Not(in=jump, out=increment);
+
+	PC(in=Aout, reset=reset, load=jump, inc=increment,
+	   out[0..14]=pc);
 }
