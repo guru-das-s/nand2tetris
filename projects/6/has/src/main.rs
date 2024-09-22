@@ -4,6 +4,9 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+mod parser;
+mod spec;
+
 #[derive(Parser, Debug)]
 /// Hack assembler
 ///
