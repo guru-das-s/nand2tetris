@@ -1,1 +1,4 @@
 *.out
+projects/6/has/debug/
+projects/6/has/target/
+projects/6/has/Cargo.lock
