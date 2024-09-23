@@ -118,8 +118,19 @@ impl HackLine {
             jump: HackLine::parse_jump(jump),
         };
 
-        if matches!(c, HackLine::C { comp: None, .. }) {
-            return None; // comp field cannot be invalid
+        if matches!(
+            c,
+            HackLine::C { comp: None, .. }
+                | HackLine::C { dest: None, .. }
+                | HackLine::C { jump: None, .. }
+        ) {
+            // None of these fields can be None.
+            // None means that an invalid value has been encountered.
+            // The Destination and Jump fields can be empty = valid Null
+            // There is no valid value for a "Null" comp value, so
+            // the invalid comp value would have to be None. Which is not
+            // allowed.
+            return None;
         }
 
         Some(c)
