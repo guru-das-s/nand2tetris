@@ -23,7 +23,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let lines = read_lines(args.filename)?;
 
     for line in lines.flatten() {
-        println!("{}", line);
+        let parsed_line = parser::HackLine::parse_line(&line)?;
+        println!("{} -> {:?}", line, parsed_line);
     }
 
     Ok(())

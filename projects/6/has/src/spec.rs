@@ -1,16 +1,16 @@
+#[derive(Debug)]
 pub enum Destination {
     Null,
     M,
     D,
     DM,
-    MD, // Same as DM
     A,
     AM,
     AD,
     ADM,
-    AMD, // Same as ADM
 }
 
+#[derive(Debug)]
 pub enum Comp {
     Zero,
     One,
@@ -42,6 +42,7 @@ pub enum Comp {
     DorM,
 }
 
+#[derive(Debug)]
 pub enum Jump {
     Null,
     JGT,
