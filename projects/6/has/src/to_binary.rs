@@ -25,7 +25,7 @@ fn binary_of_c_type_instruction(dest: Destination, comp: Comp, jump: Jump) -> St
 
 pub fn binary_of(line: HackLine) -> Option<String> {
     match line {
-        HackLine::Whitespace | HackLine::Comment => None,
+        HackLine::Whitespace | HackLine::Comment | HackLine::Label { .. } => None,
         HackLine::A { value } => Some(binary_of_a_type_instruction(value)),
         HackLine::C { dest, comp, jump } => Some(binary_of_c_type_instruction(
             dest.unwrap(),

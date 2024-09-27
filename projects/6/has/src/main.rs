@@ -1,11 +1,14 @@
 use clap::Parser;
+use parser::HackLine;
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufWriter, Write};
 use std::path::{Path, PathBuf};
+use symboltable::SymbolTable;
 
 mod parser;
 mod spec;
+mod symboltable;
 mod to_binary;
 
 #[derive(Default, Parser, Debug)]
@@ -30,13 +33,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         args.output = Some(args.filename.with_extension("hack"));
     }
 
+    let mut symbol_table = SymbolTable::init();
+
     let output_file = File::create(args.output.unwrap())?;
     let mut writer = BufWriter::new(output_file);
 
-    let lines = read_lines(args.filename)?;
+    let lines: Vec<_> = read_lines(args.filename)?.collect::<Result<_, _>>()?;
 
-    for line in lines.flatten() {
-        let parsed_line = parser::HackLine::parse_line(&line)?;
+    let mut instr_num: u16 = 0;
+    for line in &lines {
+        let parsed_line = HackLine::parse_line(&line)?;
+        match parsed_line {
+            HackLine::A { .. } | HackLine::C { .. } => instr_num += 1,
+            HackLine::Label { label } => symbol_table.add_new_label(label, instr_num),
+            _ => {}
+        }
+    }
+
+    for line in &lines {
+        let parsed_line = HackLine::parse_line(&line)?;
         println!("{} -> {:?}", line, parsed_line);
         if let Some(bincode) = to_binary::binary_of(parsed_line) {
             writeln!(writer, "{}", bincode)?;

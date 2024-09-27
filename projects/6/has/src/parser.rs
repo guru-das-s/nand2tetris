@@ -4,6 +4,9 @@ use crate::spec::{Comp, Destination, Jump};
 pub enum HackLine {
     Whitespace,
     Comment,
+    Label {
+        label: String,
+    },
     A {
         value: u16,
     },
@@ -23,9 +26,20 @@ impl HackLine {
         line.starts_with("//")
     }
 
+    fn is_label(line: &str) -> Option<HackLine> {
+        let trimmed_line = line.trim();
+        if trimmed_line.starts_with("(") {
+            let l = trimmed_line.strip_prefix("(")?.strip_suffix(")")?;
+            return Some(HackLine::Label {
+                label: l.to_string(),
+            });
+        }
+        None
+    }
+
     fn is_a_type_instruction(line: &str) -> Option<HackLine> {
-        if line.starts_with("@") {
-            let val = line[1..].trim().parse().ok()?;
+        if line.trim().starts_with("@") {
+            let val = line[1..].parse().ok()?;
             Some(HackLine::A { value: val })
         } else {
             None
@@ -141,6 +155,8 @@ impl HackLine {
             Ok(HackLine::Whitespace)
         } else if HackLine::is_comment(line) {
             Ok(HackLine::Comment)
+        } else if let Some(label) = HackLine::is_label(line) {
+            Ok(label)
         } else if let Some(a_instr) = HackLine::is_a_type_instruction(line) {
             Ok(a_instr)
         } else if let Some(c_instr) = HackLine::is_c_type_instruction(line) {
