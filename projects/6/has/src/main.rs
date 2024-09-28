@@ -52,6 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     for line in &lines {
         let parsed_line = HackLine::parse_line(&line)?;
+        #[cfg(debug_assertions)]
         println!("{} -> {:?}", line, parsed_line);
         if let Some(bincode) = to_binary::binary_of(parsed_line, &mut symbol_table) {
             writeln!(writer, "{}", bincode)?;
