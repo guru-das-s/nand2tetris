@@ -10,6 +10,9 @@ pub enum HackLine {
     A {
         value: u16,
     },
+    Variable {
+        name: String,
+    },
     C {
         dest: Option<Destination>,
         comp: Option<Comp>, // If None, is error.
@@ -23,7 +26,7 @@ impl HackLine {
     }
 
     fn is_comment(line: &str) -> bool {
-        line.starts_with("//")
+        line.trim().starts_with("//")
     }
 
     fn is_label(line: &str) -> Option<HackLine> {
@@ -38,9 +41,14 @@ impl HackLine {
     }
 
     fn is_a_type_instruction(line: &str) -> Option<HackLine> {
-        if line.trim().starts_with("@") {
-            let val = line[1..].parse().ok()?;
-            Some(HackLine::A { value: val })
+        let trimmed_line = line.trim();
+        if trimmed_line.trim().starts_with("@") {
+            if let Some(val) = trimmed_line[1..].parse::<u16>().ok() {
+                Some(HackLine::A { value: val })
+            } else {
+                let variable = trimmed_line[1..].parse::<String>().ok()?;
+                Some(HackLine::Variable { name: variable })
+            }
         } else {
             None
         }

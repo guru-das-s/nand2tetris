@@ -40,11 +40,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let lines: Vec<_> = read_lines(args.filename)?.collect::<Result<_, _>>()?;
 
-    let mut instr_num: u16 = 0;
+    let mut instr_num: i16 = -1;
     for line in &lines {
         let parsed_line = HackLine::parse_line(&line)?;
         match parsed_line {
-            HackLine::A { .. } | HackLine::C { .. } => instr_num += 1,
+            HackLine::A { .. } | HackLine::C { .. } | HackLine::Variable { .. } => instr_num += 1,
             HackLine::Label { label } => symbol_table.add_new_label(label, instr_num),
             _ => {}
         }
@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     for line in &lines {
         let parsed_line = HackLine::parse_line(&line)?;
         println!("{} -> {:?}", line, parsed_line);
-        if let Some(bincode) = to_binary::binary_of(parsed_line) {
+        if let Some(bincode) = to_binary::binary_of(parsed_line, &mut symbol_table) {
             writeln!(writer, "{}", bincode)?;
         }
     }

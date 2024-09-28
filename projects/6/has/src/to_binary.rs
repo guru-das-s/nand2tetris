@@ -1,5 +1,6 @@
 use crate::parser::HackLine;
 use crate::spec::{Comp, Destination, Jump};
+use crate::symboltable::SymbolTable;
 
 fn binary_of_a_type_instruction(value: u16) -> String {
     let a_val = value & 0x7FFF; // Set MSB to zero
@@ -23,7 +24,15 @@ fn binary_of_c_type_instruction(dest: Destination, comp: Comp, jump: Jump) -> St
     c_binary_string
 }
 
-pub fn binary_of(line: HackLine) -> Option<String> {
+fn binary_of_variable(variable: String, symbol_table: &mut SymbolTable) -> String {
+    if !symbol_table.is_known(&variable) {
+        symbol_table.add_new_variable(&variable);
+    }
+    let value = symbol_table.get_variable_address(&variable);
+    return binary_of_a_type_instruction(value);
+}
+
+pub fn binary_of(line: HackLine, symboltable: &mut SymbolTable) -> Option<String> {
     match line {
         HackLine::Whitespace | HackLine::Comment | HackLine::Label { .. } => None,
         HackLine::A { value } => Some(binary_of_a_type_instruction(value)),
@@ -32,5 +41,6 @@ pub fn binary_of(line: HackLine) -> Option<String> {
             comp.unwrap(),
             jump.unwrap(),
         )),
+        HackLine::Variable { name } => Some(binary_of_variable(name, symboltable)),
     }
 }
