@@ -12,3 +12,18 @@ running rich and complex full-featured programs such as Tetris.
 The project homepage forbids public distribution of the code so as to not rob other
 students of the joy of self-learning, but that is really up to the students
 themselves; so this repository is public.
+
+## Running the `has` assembler (Project 6)
+
+The `has` assembler from Project 6 is written in Rust and so `cargo run` works
+perfectly well. Run it as follows:
+
+```rust
+cargo run --release --bin has -- -f projects/6/rect/Rect.asm
+```
+
+Read its full help message for more options.
+
+```rust
+cargo run --release --bin has -- --help
+```
