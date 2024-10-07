@@ -1,6 +1,7 @@
 #!/bin/bash
 # Test the `has` assembler
 # 	Has to be executed from the repo's root folder.
+set -e
 
 cleanup() {
 	find projects/6/ -iname *.hack -exec rm {} \;
