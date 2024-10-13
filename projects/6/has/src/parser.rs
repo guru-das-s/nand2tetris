@@ -15,7 +15,7 @@ pub enum HackLine {
     },
     C {
         dest: Option<Destination>,
-        comp: Option<Comp>, // If None, is error.
+        comp: Option<Comp>,
         jump: Option<Jump>,
     },
 }
