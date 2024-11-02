@@ -31,15 +31,39 @@ fn assemble(
     lines: &Vec<String>,
     symbol_table: &mut SymbolTable,
 ) -> Result<(), Box<dyn Error>> {
-    let mut instr_num: i16 = -1;
+    let mut instr_num: u16 = 0;
+    let mut line_iter = lines.iter().peekable();
+    let mut label_found = false;
+    let mut labels = Vec::<String>::new();
 
-    for line in lines {
+    while let Some(line) = line_iter.peek() {
         let parsed_line = HackLine::parse_line(&line)?;
+        #[cfg(debug_assertions)]
+        println!("[{}] {} -> {:?}", instr_num, line, parsed_line);
         match parsed_line {
-            HackLine::A { .. } | HackLine::C { .. } | HackLine::Variable { .. } => instr_num += 1,
-            HackLine::Label { label } => symbol_table.add_new_label(label, instr_num),
+            HackLine::A { .. } | HackLine::C { .. } | HackLine::Variable { .. } => {
+                if label_found {
+                    label_found = false;
+                    // The multiple labels listed on consecutive lines need to
+                    // be all mapped to the same instruction number, so pop each
+                    // one of them and add them to the symbol table.
+                    while let Some(label) = labels.pop() {
+                        #[cfg(debug_assertions)]
+                        println!("[{}] Adding label {} = {}", instr_num, label, instr_num);
+                        symbol_table.add_new_label(label.clone(), instr_num);
+                    }
+                }
+                instr_num += 1;
+            }
+            HackLine::Label { label, .. } => {
+                label_found = true;
+                // There may be multiple labels listed on consecutive lines, so
+                // collect all of them.
+                labels.push(label);
+            }
             _ => {}
         }
+        line_iter.next(); // advance the iterator
     }
 
     for line in lines {

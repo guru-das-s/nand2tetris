@@ -39,11 +39,8 @@ impl SymbolTable {
         }
     }
 
-    pub fn add_new_label(&mut self, label: String, instr_num: i16) {
-        // explicit type conversion "as u16" because otherwise a
-        // whole bunch of spots would need to be i16 and lead to
-        // changes I don't want to make
-        self.m.entry(label).or_insert((instr_num + 1) as u16);
+    pub fn add_new_label(&mut self, label: String, instr_num: u16) {
+        self.m.entry(label).or_insert(instr_num);
     }
 
     pub fn is_known(&mut self, name: &String) -> bool {
