@@ -11,3 +11,7 @@ clap = { version = "4.5.18", features = ["derive"] }
 [[bin]]
 name = "has"
 path = "projects/6/has/src/main.rs"
+
+[[bin]]
+name = "vmt"
+path = "projects/7/vmt/src/main.rs"
