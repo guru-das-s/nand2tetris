@@ -1,3 +1,5 @@
+use std::sync::{Mutex, OnceLock};
+
 use crate::phrases;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -14,12 +16,46 @@ pub enum ArithmeticType {
 }
 impl ArithmeticType {
     pub fn code(&self) -> Result<String, String> {
+        static E: OnceLock<Mutex<u16>> = OnceLock::new();
+        static G: OnceLock<Mutex<u16>> = OnceLock::new();
+        static L: OnceLock<Mutex<u16>> = OnceLock::new();
+
+        let e = E.get_or_init(|| Mutex::new(0));
+        let g = G.get_or_init(|| Mutex::new(0));
+        let l = L.get_or_init(|| Mutex::new(0));
+
+        let mut eq = e.lock().unwrap();
+        let mut gt = g.lock().unwrap();
+        let mut lt = l.lock().unwrap();
+
         match self {
             Self::Add => Ok(phrases::ADD.to_string()),
-            _ => Err(format!(
-                "asm for arithmetic operation {:?} not implemented yet",
-                self
-            )),
+            Self::Sub => Ok(phrases::SUB.to_string()),
+            Self::Neg => Ok(phrases::NEG.to_string()),
+            Self::Eq => {
+                let s = phrases::EQ
+                    .to_string()
+                    .replace("XYZ", format!("{}", eq).as_str());
+                *eq += 1;
+                Ok(s)
+            }
+            Self::Gt => {
+                let s = phrases::GT
+                    .to_string()
+                    .replace("XYZ", format!("{}", gt).as_str());
+                *gt += 1;
+                Ok(s)
+            }
+            Self::Lt => {
+                let s = phrases::LT
+                    .to_string()
+                    .replace("XYZ", format!("{}", lt).as_str());
+                *lt += 1;
+                Ok(s)
+            }
+            Self::And => Ok(phrases::AND.to_string()),
+            Self::Or => Ok(phrases::OR.to_string()),
+            Self::Not => Ok(phrases::NOT.to_string()),
         }
     }
 }
