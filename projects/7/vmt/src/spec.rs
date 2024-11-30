@@ -84,16 +84,24 @@ impl Segment {
             _ => None,
         }
     }
+
+    pub fn to_phrase(&self) -> Result<String, String> {
+        match self {
+            Segment::Constant => Ok(phrases::CONSTANT.to_string()),
+            Segment::Local => Ok(phrases::L_A_T_T.replace("SEG", "LCL").to_string()),
+            _ => Err(format!("Phrase not implemented for {:?}", self)),
+        }
+    }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum VmCmdType {
     Push,
     Pop,
     Arithmetic(ArithmeticType),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct VmCommand {
     pub cmd: VmCmdType,
     pub arg1: Option<Segment>,
@@ -104,27 +112,25 @@ impl VmCommand {
         Self { cmd, arg1, arg2 }
     }
 
-    fn code_push_constant(&self) -> Result<String, String> {
+    fn code_segment_i(&self, phrase: String) -> Result<String, String> {
         let i = self
             .arg2
             .ok_or(format!("Push command arg2 cannot be empty"))?;
 
-        let s = phrases::PUSH_CONSTANT.replace("XYZ", format!("{}", i).as_str());
+        let s = phrase.replace("XYZ", format!("{}", i).as_str());
         Ok(s)
     }
 
-    fn code_push(&self) -> Result<String, String> {
+    fn code_segment(self) -> Result<String, String> {
         let segment = self
             .arg1
             .ok_or(format!("Push command segment cannot be empty"))?;
-
-        match segment {
-            Segment::Constant => self.code_push_constant(),
-            _ => Err(format!(
-                "asm for push segment {:?} not implemented yet",
-                segment
-            )),
-        }
+        let phrase = segment.to_phrase()?;
+        self.code_segment_i(phrase)
+    }
+    fn code_push(&self) -> Result<String, String> {
+        let seg_code = self.code_segment()?;
+        Ok(seg_code + phrases::PUSH)
     }
 
     pub fn code(&self) -> Result<String, String> {

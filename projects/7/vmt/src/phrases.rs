@@ -1,6 +1,18 @@
-pub const PUSH_CONSTANT: &str = r#"@XYZ
-// Push
+pub const CONSTANT: &str = r#"// Push constant
+@XYZ
 D=A
+"#;
+
+// Only for segments Local, Argument, This, That
+pub const L_A_T_T: &str = r#"// Push SEG XYZ
+@SEG
+D=M
+@XYZ
+A=D+A
+D=M
+"#;
+
+pub const PUSH: &str = r#"// Push
 @SP
 A=M
 M=D
