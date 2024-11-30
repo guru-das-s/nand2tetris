@@ -26,37 +26,44 @@ M=M+1
 
 // Pop local 2 begins now
 // ........................
-// Step 1: Get value to pop
+// Step 1: Get data to pop
 @SP
 M=M-1
 A=M
 D=M
-// Store it in first scratch register
-// Only R13, R14 and R15 are free to use
-// in my view, the TEMP segment taking up
-// R5 - R12 for itself.
-// The BasicTestVME.tst does not seem to be
-// using R13 - R15 in my test run, or it
-// must be cleverly clearing them to not
-// give away this insight.
-@R13
+// Step 2: Push this data to stack
+@SP
+M=M+1
+A=M
 M=D
-// Now R13 has the value! Remember this.
-
+// Now last two elements in stack
+// are the same, with SP pointing
+// to the last NON-EMPTY element.
+// Set SP to the second-to-last spot.
+@SP
+M=M-1
+// Step 3: Calculate address to pop to
 @LCL
 D=M
 @2
 D=D+A
-// Now D has mem location LCL+2
-// Store it in second scratch register
-@R14
-M=D
-// Now R14 has the target mem location. Remember this too.
-
-// Now, triumphantly do *(M[R14]) = M[R13]
-// (R14 is a pointer)
-@R13
-D=M
-@R14
+// Set SP to this value
+@SP
 A=M
 M=D
+// Increment SP
+@SP
+M=M+1
+// Now last two elements of stack are
+// (N-1) ----- address
+// (N)   ----- data     <SP points here>
+// Now, finish it off
+@SP
+A=M
+D=M
+@SP
+M=M-1
+A=M
+A=M
+M=D
+// Now SP points to right place.
