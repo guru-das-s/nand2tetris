@@ -84,19 +84,6 @@ impl Segment {
             _ => None,
         }
     }
-
-    pub fn to_phrase(&self) -> Result<String, String> {
-        match self {
-            Segment::Constant => Ok(phrases::CONSTANT.to_string()),
-            Segment::Local => Ok(phrases::SEGMENT.replace("SEG", "LCL").to_string()),
-            Segment::Argument => Ok(phrases::SEGMENT.replace("SEG", "ARG").to_string()),
-            Segment::This => Ok(phrases::SEGMENT.replace("SEG", "THIS").to_string()),
-            Segment::That => Ok(phrases::SEGMENT.replace("SEG", "THAT").to_string()),
-            Segment::Static => Ok(phrases::STATIC.to_string()), // upper layers will handle str replacement
-            Segment::Temp => Ok(phrases::SEGMENT.replace("SEG", "5").to_string()),
-            Segment::Pointer => Ok(phrases::POINTER.to_string()),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -117,6 +104,49 @@ impl VmCommand {
         Self { cmd, arg1, arg2 }
     }
 
+    pub fn to_phrase(&self, segment: &Segment) -> Result<String, String> {
+        let cmd = self.cmd;
+
+        match cmd {
+            VmCmdType::Push => {
+                match segment {
+                    Segment::Constant => Ok(phrases::CONSTANT.to_string()),
+                    Segment::Local => Ok(phrases::SEGMENT.replace("SEG", "LCL").to_string()),
+                    Segment::Argument => Ok(phrases::SEGMENT.replace("SEG", "ARG").to_string()),
+                    Segment::This => Ok(phrases::SEGMENT.replace("SEG", "THIS").to_string()),
+                    Segment::That => Ok(phrases::SEGMENT.replace("SEG", "THAT").to_string()),
+                    Segment::Static => Ok(phrases::STATIC.to_string()), // upper layers will handle str replacement
+                    Segment::Temp => Ok(phrases::TEMP.to_string()),
+                    Segment::Pointer => Ok(phrases::POINTER.to_string()),
+                }
+            }
+            VmCmdType::Pop => {
+                match segment {
+                    Segment::Constant => Err(format!("Cannot pop to constant segment")),
+                    Segment::Local => {
+                        Ok(phrases::SEGMENT_ADDRESS.replace("SEG", "LCL").to_string())
+                    }
+                    Segment::Argument => {
+                        Ok(phrases::SEGMENT_ADDRESS.replace("SEG", "ARG").to_string())
+                    }
+                    Segment::This => {
+                        Ok(phrases::SEGMENT_ADDRESS.replace("SEG", "THIS").to_string())
+                    }
+                    Segment::That => {
+                        Ok(phrases::SEGMENT_ADDRESS.replace("SEG", "THAT").to_string())
+                    }
+                    Segment::Static => Ok(phrases::STATIC_ADDRESS.to_string()), // upper layers will handle str replacement
+                    Segment::Temp => Ok(phrases::TEMP_ADDRESS.to_string()),
+                    Segment::Pointer => Ok(phrases::POINTER_ADDRESS.to_string()),
+                }
+            }
+            _ => Err(format!(
+                "Command {:?} does not need segment/i computation",
+                cmd
+            )),
+        }
+    }
+
     fn code_segment_i(&self, s: Segment, i: u16, phrase: &str) -> Result<String, String> {
         let code: String = match s {
             Segment::Pointer => {
@@ -131,13 +161,13 @@ impl VmCommand {
     fn code_segment(self) -> Result<String, String> {
         let segment = self
             .arg1
-            .ok_or(format!("Push command segment cannot be empty"))?;
+            .ok_or(format!("Push/Pop command segment cannot be empty"))?;
 
         let i = self
             .arg2
-            .ok_or(format!("Push command arg2 cannot be empty"))?;
+            .ok_or(format!("Push/Pop command arg2 cannot be empty"))?;
 
-        let phrase = segment.to_phrase()?;
+        let phrase = self.to_phrase(&segment)?;
         self.code_segment_i(segment, i, &phrase)
     }
 
@@ -146,14 +176,16 @@ impl VmCommand {
         Ok(seg_code + phrases::PUSH)
     }
 
+    fn code_pop(&self) -> Result<String, String> {
+        let seg_code = self.code_segment()?;
+        Ok(phrases::POP_PRE.to_string() + &seg_code + phrases::POP)
+    }
+
     pub fn code(&self) -> Result<String, String> {
         match self.cmd {
             VmCmdType::Push => self.code_push(),
+            VmCmdType::Pop => self.code_pop(),
             VmCmdType::Arithmetic(op) => op.code(),
-            _ => Err(format!(
-                "asm for VM command {:?} not implemented yet",
-                self.cmd
-            )),
         }
     }
 }

@@ -9,7 +9,12 @@ A=M
 D=A
 "#;
 
-// Only for segments Local, Argument, This, That, Temp
+pub const POINTER_ADDRESS: &str = r#"// Compute addr of pointer XYZ
+@XYZ
+D=A
+"#;
+
+// Only for segments Local, Argument, This, That
 pub const SEGMENT: &str = r#"// Push SEG XYZ
 @SEG
 D=M
@@ -18,9 +23,37 @@ A=D+A
 D=M
 "#;
 
+pub const SEGMENT_ADDRESS: &str = r#"// Compute addr of SEG XYZ
+@SEG
+D=M
+@XYZ
+D=D+A
+"#;
+
+pub const TEMP: &str = r#"// Push temp XYZ
+@5
+D=A
+@XYZ
+A=D+A
+D=M
+"#;
+
+pub const TEMP_ADDRESS: &str = r#"// Compute addr of temp XYZ
+@5
+D=A
+@XYZ
+D=D+A
+"#;
+
 // XYZ will be handled by VmCommand::code_segment_i(), and
 // FILE will be handled by Asmwriter::write().
 pub const STATIC: &str = r#"// Push Static XYZ
+@FILE.XYZ
+A=M
+D=A
+"#;
+
+pub const STATIC_ADDRESS: &str = r#"// Compute addr of Static XYZ
 @FILE.XYZ
 D=A
 "#;
@@ -197,4 +230,34 @@ M=D
 // Increment SP
 @SP
 M=M+1
+"#;
+
+pub const POP_PRE: &str = r#"// POP prologue
+@SP
+M=M-1
+A=M
+D=M
+@SP
+M=M+1
+A=M
+M=D
+@SP
+M=M-1
+"#;
+
+pub const POP: &str = r#"// POP
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+@SP
+A=M
+D=M
+@SP
+M=M-1
+A=M
+A=M
+M=D
 "#;
