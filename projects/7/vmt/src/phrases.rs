@@ -12,6 +12,13 @@ A=D+A
 D=M
 "#;
 
+// XYZ will be handled by VmCommand::code_segment_i(), and
+// FILE will be handled by Asmwriter::write().
+pub const STATIC: &str = r#"// Push Static XYZ
+@FILE.XYZ
+D=A
+"#;
+
 pub const PUSH: &str = r#"// Push
 @SP
 A=M

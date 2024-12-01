@@ -89,6 +89,7 @@ impl Segment {
         match self {
             Segment::Constant => Ok(phrases::CONSTANT.to_string()),
             Segment::Local => Ok(phrases::L_A_T_T.replace("SEG", "LCL").to_string()),
+            Segment::Static => Ok(phrases::STATIC.to_string()),
             _ => Err(format!("Phrase not implemented for {:?}", self)),
         }
     }
@@ -128,6 +129,7 @@ impl VmCommand {
         let phrase = segment.to_phrase()?;
         self.code_segment_i(phrase)
     }
+
     fn code_push(&self) -> Result<String, String> {
         let seg_code = self.code_segment()?;
         Ok(seg_code + phrases::PUSH)

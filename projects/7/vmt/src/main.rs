@@ -40,7 +40,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     p.parse()?;
     p.print_parsed();
 
-    let w = asmwriter::AsmWriter::new(p.parsed, writer);
+    let w = asmwriter::AsmWriter::new(
+        p.parsed,
+        writer,
+        args.output
+            .as_ref()
+            .unwrap()
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap(),
+    );
     w.write()?;
 
     Ok(())
