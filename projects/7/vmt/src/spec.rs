@@ -89,8 +89,9 @@ impl Segment {
         match self {
             Segment::Constant => Ok(phrases::CONSTANT.to_string()),
             Segment::Local => Ok(phrases::SEGMENT.replace("SEG", "LCL").to_string()),
-            Segment::Static => Ok(phrases::STATIC.to_string()),
+            Segment::Static => Ok(phrases::STATIC.to_string()), // upper layers will handle str replacement
             Segment::Temp => Ok(phrases::SEGMENT.replace("SEG", "5").to_string()),
+            Segment::Pointer => Ok(phrases::POINTER.to_string()),
             _ => Err(format!("Phrase not implemented for {:?}", self)),
         }
     }
@@ -114,21 +115,28 @@ impl VmCommand {
         Self { cmd, arg1, arg2 }
     }
 
-    fn code_segment_i(&self, phrase: String) -> Result<String, String> {
-        let i = self
-            .arg2
-            .ok_or(format!("Push command arg2 cannot be empty"))?;
-
-        let s = phrase.replace("XYZ", format!("{}", i).as_str());
-        Ok(s)
+    fn code_segment_i(&self, s: Segment, i: u16, phrase: &str) -> Result<String, String> {
+        let code: String = match s {
+            Segment::Pointer => {
+                let tot = if i == 0 { "THIS" } else { "THAT" };
+                phrase.replace("XYZ", tot)
+            }
+            _ => phrase.replace("XYZ", format!("{}", i).as_str()),
+        };
+        Ok(code)
     }
 
     fn code_segment(self) -> Result<String, String> {
         let segment = self
             .arg1
             .ok_or(format!("Push command segment cannot be empty"))?;
+
+        let i = self
+            .arg2
+            .ok_or(format!("Push command arg2 cannot be empty"))?;
+
         let phrase = segment.to_phrase()?;
-        self.code_segment_i(phrase)
+        self.code_segment_i(segment, i, &phrase)
     }
 
     fn code_push(&self) -> Result<String, String> {

@@ -3,6 +3,11 @@ pub const CONSTANT: &str = r#"// Push constant
 D=A
 "#;
 
+pub const POINTER: &str = r#"// Push pointer XYZ
+@XYZ
+D=A
+"#;
+
 // Only for segments Local, Argument, This, That, Temp
 pub const SEGMENT: &str = r#"// Push SEG XYZ
 @SEG
