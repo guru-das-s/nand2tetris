@@ -88,8 +88,9 @@ impl Segment {
     pub fn to_phrase(&self) -> Result<String, String> {
         match self {
             Segment::Constant => Ok(phrases::CONSTANT.to_string()),
-            Segment::Local => Ok(phrases::L_A_T_T.replace("SEG", "LCL").to_string()),
+            Segment::Local => Ok(phrases::SEGMENT.replace("SEG", "LCL").to_string()),
             Segment::Static => Ok(phrases::STATIC.to_string()),
+            Segment::Temp => Ok(phrases::SEGMENT.replace("SEG", "5").to_string()),
             _ => Err(format!("Phrase not implemented for {:?}", self)),
         }
     }

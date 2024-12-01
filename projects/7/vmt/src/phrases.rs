@@ -3,8 +3,8 @@ pub const CONSTANT: &str = r#"// Push constant
 D=A
 "#;
 
-// Only for segments Local, Argument, This, That
-pub const L_A_T_T: &str = r#"// Push SEG XYZ
+// Only for segments Local, Argument, This, That, Temp
+pub const SEGMENT: &str = r#"// Push SEG XYZ
 @SEG
 D=M
 @XYZ
