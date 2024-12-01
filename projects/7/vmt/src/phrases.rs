@@ -5,6 +5,7 @@ D=A
 
 pub const POINTER: &str = r#"// Push pointer XYZ
 @XYZ
+A=M
 D=A
 "#;
 
