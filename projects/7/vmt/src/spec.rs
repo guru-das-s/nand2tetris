@@ -89,10 +89,12 @@ impl Segment {
         match self {
             Segment::Constant => Ok(phrases::CONSTANT.to_string()),
             Segment::Local => Ok(phrases::SEGMENT.replace("SEG", "LCL").to_string()),
+            Segment::Argument => Ok(phrases::SEGMENT.replace("SEG", "ARG").to_string()),
+            Segment::This => Ok(phrases::SEGMENT.replace("SEG", "THIS").to_string()),
+            Segment::That => Ok(phrases::SEGMENT.replace("SEG", "THAT").to_string()),
             Segment::Static => Ok(phrases::STATIC.to_string()), // upper layers will handle str replacement
             Segment::Temp => Ok(phrases::SEGMENT.replace("SEG", "5").to_string()),
             Segment::Pointer => Ok(phrases::POINTER.to_string()),
-            _ => Err(format!("Phrase not implemented for {:?}", self)),
         }
     }
 }
