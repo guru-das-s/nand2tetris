@@ -40,16 +40,16 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_arg1(&self, word: &str) -> Result<Segment, String> {
+    fn parse_arg1(&self, word: &str) -> Result<Arg1, String> {
         match word {
-            "local" => Ok(Segment::Local),
-            "argument" => Ok(Segment::Argument),
-            "this" => Ok(Segment::This),
-            "that" => Ok(Segment::That),
-            "constant" => Ok(Segment::Constant),
-            "static" => Ok(Segment::Static),
-            "pointer" => Ok(Segment::Pointer),
-            "temp" => Ok(Segment::Temp),
+            "local" => Ok(Arg1::Segment(Segment::Local)),
+            "argument" => Ok(Arg1::Segment(Segment::Argument)),
+            "this" => Ok(Arg1::Segment(Segment::This)),
+            "that" => Ok(Arg1::Segment(Segment::That)),
+            "constant" => Ok(Arg1::Segment(Segment::Constant)),
+            "static" => Ok(Arg1::Segment(Segment::Static)),
+            "pointer" => Ok(Arg1::Segment(Segment::Pointer)),
+            "temp" => Ok(Arg1::Segment(Segment::Temp)),
             _ => Err(format!("Invalid segment: {}", word)),
         }
     }
@@ -62,7 +62,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_arg2(&self, s: &Segment, word: &str) -> Result<Option<u16>, String> {
+    fn parse_arg2(&self, s: &Arg1, word: &str) -> Result<Option<u16>, String> {
         let i = self.parse_i(word)?;
         if let Some(max_limit) = s.max_limit() {
             if i > max_limit {
@@ -75,21 +75,17 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_line_arg1(&self, t: &VmCmdType, parts: &Vec<&str>) -> Result<Option<Segment>, String> {
+    fn parse_line_arg1(&self, t: &VmCmdType, parts: &Vec<&str>) -> Result<Option<Arg1>, String> {
         match t {
             VmCmdType::Push | VmCmdType::Pop => Ok(Some(self.parse_arg1(parts[1])?)),
             VmCmdType::Arithmetic(..) => Ok(None),
         }
     }
 
-    fn parse_line_arg2(
-        &self,
-        s: &Option<Segment>,
-        parts: &Vec<&str>,
-    ) -> Result<Option<u16>, String> {
+    fn parse_line_arg2(&self, s: &Option<Arg1>, parts: &Vec<&str>) -> Result<Option<u16>, String> {
         match s {
             None => return Ok(None),
-            Some(segment) => return self.parse_arg2(segment, parts[2]),
+            Some(arg1) => return self.parse_arg2(arg1, parts[2]),
         }
     }
 
@@ -108,10 +104,10 @@ impl<'a> Parser<'a> {
         }
 
         let cmd_type = self.parse_line_cmd_type(parts[0])?;
-        let segment = self.parse_line_arg1(&cmd_type, &parts)?;
-        let i = self.parse_line_arg2(&segment, &parts)?;
+        let arg1 = self.parse_line_arg1(&cmd_type, &parts)?;
+        let i = self.parse_line_arg2(&arg1, &parts)?;
 
-        Ok(Some(VmCommand::new(cmd_type, segment, i)))
+        Ok(Some(VmCommand::new(cmd_type, arg1, i)))
     }
 
     pub fn parse(&mut self) -> Result<(), String> {
@@ -145,7 +141,7 @@ mod tests {
             p.parsed.pop(),
             Some(VmCommand::new(
                 VmCmdType::Push,
-                Some(Segment::Constant),
+                Some(Arg1::Segment(Segment::Constant)),
                 Some(7)
             ))
         );

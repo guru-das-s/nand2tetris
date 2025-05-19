@@ -93,18 +93,33 @@ pub enum VmCmdType {
     Arithmetic(ArithmeticType),
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum Arg1 {
+    Segment(Segment),
+    Symbol(String),
+}
+
+impl Arg1 {
+    pub fn max_limit(&self) -> Option<u16> {
+        match self {
+            Arg1::Segment(s) => s.max_limit(),
+            Arg1::Symbol(_) => None,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct VmCommand {
     pub cmd: VmCmdType,
-    pub arg1: Option<Segment>,
+    pub arg1: Option<Arg1>,
     pub arg2: Option<u16>,
 }
 impl VmCommand {
-    pub fn new(cmd: VmCmdType, arg1: Option<Segment>, arg2: Option<u16>) -> Self {
+    pub fn new(cmd: VmCmdType, arg1: Option<Arg1>, arg2: Option<u16>) -> Self {
         Self { cmd, arg1, arg2 }
     }
 
-    pub fn to_phrase(&self, segment: &Segment) -> Result<String, String> {
+    pub fn segment_to_phrase(&self, segment: &Segment) -> Result<String, String> {
         let cmd = self.cmd;
 
         match cmd {
@@ -147,6 +162,13 @@ impl VmCommand {
         }
     }
 
+    pub fn to_phrase(&self, arg1: &Arg1) -> Result<String, String> {
+        match arg1 {
+            Arg1::Segment(s) => self.segment_to_phrase(s),
+            Arg1::Symbol(_) => todo!(),
+        }
+    }
+
     fn code_segment_i(&self, s: Segment, i: u16, phrase: &str) -> Result<String, String> {
         let code: String = match s {
             Segment::Pointer => {
@@ -159,7 +181,7 @@ impl VmCommand {
     }
 
     fn code_segment(self) -> Result<String, String> {
-        let segment = self
+        let arg1 = self
             .arg1
             .ok_or(format!("Push/Pop command segment cannot be empty"))?;
 
@@ -167,8 +189,8 @@ impl VmCommand {
             .arg2
             .ok_or(format!("Push/Pop command arg2 cannot be empty"))?;
 
-        let phrase = self.to_phrase(&segment)?;
-        self.code_segment_i(segment, i, &phrase)
+        let phrase = self.to_phrase(&arg1)?;
+        self.code_segment_i(arg1, i, &phrase)
     }
 
     fn code_push(&self) -> Result<String, String> {

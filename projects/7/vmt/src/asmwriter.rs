@@ -23,7 +23,10 @@ impl<'a> AsmWriter<'a> {
         for vmcmd in self.vmcmds {
             let mut asm_code = vmcmd.code()?;
 
-            asm_code = if vmcmd.arg1.is_some_and(|segment| segment == Segment::Static) {
+            asm_code = if vmcmd
+                .arg1
+                .is_some_and(|segment| segment == Arg1::Segment(Segment::Static))
+            {
                 asm_code.replace("FILE", self.filename)
             } else {
                 asm_code
