@@ -261,3 +261,22 @@ A=M
 A=M
 M=D
 "#;
+
+pub const LABEL: &str = r#"// LABEL
+(XYZ)
+"#;
+
+pub const IF_GOTO: &str = r#"// IF-GOTO
+// first, get results of prev bool op
+@SP
+A=M
+D=M
+// pop
+@SP
+M=M-1
+@DONTJUMP.XYZ
+D;JLE
+@LOOP
+0;JMP
+(DONTJUMP.XYZ)
+"#;

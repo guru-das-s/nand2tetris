@@ -1,6 +1,6 @@
 use std::sync::{Mutex, OnceLock};
 
-use crate::phrases;
+use crate::phrases::{self};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum ArithmeticType {
@@ -91,21 +91,14 @@ pub enum VmCmdType {
     Push,
     Pop,
     Arithmetic(ArithmeticType),
+    Label,
+    IfGoto,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Arg1 {
     Segment(Segment),
     Symbol(String),
-}
-
-impl Arg1 {
-    pub fn max_limit(&self) -> Option<u16> {
-        match self {
-            Arg1::Segment(s) => s.max_limit(),
-            Arg1::Symbol(_) => None,
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -180,9 +173,10 @@ impl VmCommand {
         Ok(code)
     }
 
-    fn code_segment(self) -> Result<String, String> {
+    fn code_segment(&self) -> Result<String, String> {
         let arg1 = self
             .arg1
+            .clone()
             .ok_or(format!("Push/Pop command segment cannot be empty"))?;
 
         let i = self
@@ -190,7 +184,13 @@ impl VmCommand {
             .ok_or(format!("Push/Pop command arg2 cannot be empty"))?;
 
         let phrase = self.to_phrase(&arg1)?;
-        self.code_segment_i(arg1, i, &phrase)
+
+        match arg1 {
+            Arg1::Segment(s) => self.code_segment_i(s, i, &phrase),
+            Arg1::Symbol(_) => Err(format!(
+                "Segment code gen invalid for non-segment VmCmdType"
+            )),
+        }
     }
 
     fn code_push(&self) -> Result<String, String> {
@@ -203,11 +203,49 @@ impl VmCommand {
         Ok(phrases::POP_PRE.to_string() + &seg_code + phrases::POP)
     }
 
+    fn code_label(&self) -> Result<String, String> {
+        let a = self
+            .arg1
+            .clone()
+            .ok_or(format!("Label command arg1 cannot be empty"))?;
+
+        match a {
+            Arg1::Segment(_) => Err(format!("Label command arg1 cannot be a segment")),
+            Arg1::Symbol(label) => Ok(phrases::LABEL.replace("XYZ", &label)),
+        }
+    }
+
+    fn code_ifgoto(&self) -> Result<String, String> {
+        let a = self
+            .arg1
+            .clone()
+            .ok_or(format!("If-goto command arg1 cannot be empty"))?;
+
+        static IG: OnceLock<Mutex<u16>> = OnceLock::new();
+
+        let i_m = IG.get_or_init(|| Mutex::new(0));
+
+        let mut i = i_m.lock().unwrap();
+
+        match a {
+            Arg1::Segment(_) => Err(format!("If-goto command arg1 cannot be a segment")),
+            Arg1::Symbol(label) => {
+                let s = phrases::IF_GOTO
+                    .replace("XYZ", format!("{}", i).as_str())
+                    .replace("LOOP", &label);
+                *i += 1;
+                Ok(s)
+            }
+        }
+    }
+
     pub fn code(&self) -> Result<String, String> {
         match self.cmd {
             VmCmdType::Push => self.code_push(),
             VmCmdType::Pop => self.code_pop(),
             VmCmdType::Arithmetic(op) => op.code(),
+            VmCmdType::Label => self.code_label(),
+            VmCmdType::IfGoto => self.code_ifgoto(),
         }
     }
 }

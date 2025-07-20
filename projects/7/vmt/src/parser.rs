@@ -36,21 +36,30 @@ impl<'a> Parser<'a> {
             "and" => Ok(VmCmdType::Arithmetic(ArithmeticType::And)),
             "or" => Ok(VmCmdType::Arithmetic(ArithmeticType::Or)),
             "not" => Ok(VmCmdType::Arithmetic(ArithmeticType::Not)),
+            "label" => Ok(VmCmdType::Label),
+            "if-goto" => Ok(VmCmdType::IfGoto),
             _ => Err(format!("Invalid VM command type: {}", word)),
         }
     }
 
-    fn parse_arg1(&self, word: &str) -> Result<Arg1, String> {
-        match word {
-            "local" => Ok(Arg1::Segment(Segment::Local)),
-            "argument" => Ok(Arg1::Segment(Segment::Argument)),
-            "this" => Ok(Arg1::Segment(Segment::This)),
-            "that" => Ok(Arg1::Segment(Segment::That)),
-            "constant" => Ok(Arg1::Segment(Segment::Constant)),
-            "static" => Ok(Arg1::Segment(Segment::Static)),
-            "pointer" => Ok(Arg1::Segment(Segment::Pointer)),
-            "temp" => Ok(Arg1::Segment(Segment::Temp)),
-            _ => Err(format!("Invalid segment: {}", word)),
+    fn parse_arg1(&self, t: &VmCmdType, word: &str) -> Result<Arg1, String> {
+        match t {
+            VmCmdType::Push | VmCmdType::Pop => match word {
+                "local" => Ok(Arg1::Segment(Segment::Local)),
+                "argument" => Ok(Arg1::Segment(Segment::Argument)),
+                "this" => Ok(Arg1::Segment(Segment::This)),
+                "that" => Ok(Arg1::Segment(Segment::That)),
+                "constant" => Ok(Arg1::Segment(Segment::Constant)),
+                "static" => Ok(Arg1::Segment(Segment::Static)),
+                "pointer" => Ok(Arg1::Segment(Segment::Pointer)),
+                "temp" => Ok(Arg1::Segment(Segment::Temp)),
+                _ => Err(format!("Invalid segment: {}", word)),
+            },
+            VmCmdType::Label | VmCmdType::IfGoto => Ok(Arg1::Symbol(word.to_string())),
+            _ => Err(format!(
+                "Arg1 parsing not applicable for invalid command type {:?}",
+                t
+            )),
         }
     }
 
@@ -62,7 +71,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_arg2(&self, s: &Arg1, word: &str) -> Result<Option<u16>, String> {
+    fn parse_arg2(&self, s: &Segment, word: &str) -> Result<Option<u16>, String> {
         let i = self.parse_i(word)?;
         if let Some(max_limit) = s.max_limit() {
             if i > max_limit {
@@ -77,15 +86,20 @@ impl<'a> Parser<'a> {
 
     fn parse_line_arg1(&self, t: &VmCmdType, parts: &Vec<&str>) -> Result<Option<Arg1>, String> {
         match t {
-            VmCmdType::Push | VmCmdType::Pop => Ok(Some(self.parse_arg1(parts[1])?)),
+            VmCmdType::Push | VmCmdType::Pop | VmCmdType::Label | VmCmdType::IfGoto => {
+                Ok(Some(self.parse_arg1(t, parts[1])?))
+            }
             VmCmdType::Arithmetic(..) => Ok(None),
         }
     }
 
-    fn parse_line_arg2(&self, s: &Option<Arg1>, parts: &Vec<&str>) -> Result<Option<u16>, String> {
-        match s {
-            None => return Ok(None),
-            Some(arg1) => return self.parse_arg2(arg1, parts[2]),
+    fn parse_line_arg2(&self, a: &Option<Arg1>, parts: &Vec<&str>) -> Result<Option<u16>, String> {
+        match a {
+            None => Ok(None),
+            Some(arg1) => match arg1 {
+                Arg1::Segment(s) => self.parse_arg2(s, parts[2]),
+                Arg1::Symbol(_) => Ok(None),
+            },
         }
     }
 
@@ -94,14 +108,9 @@ impl<'a> Parser<'a> {
             return Ok(None);
         }
 
-        let parts: Vec<&str> = line.trim().split(' ').collect();
+        let mut parts: Vec<&str> = line.trim().split_whitespace().collect();
 
-        if parts.len() > MAX_NUM_VM_CMD_PARTS {
-            return Err(format!(
-                "Line: '{}' exceeds max {} number of parts",
-                line, MAX_NUM_VM_CMD_PARTS
-            ));
-        }
+        parts.truncate(MAX_NUM_VM_CMD_PARTS);
 
         let cmd_type = self.parse_line_cmd_type(parts[0])?;
         let arg1 = self.parse_line_arg1(&cmd_type, &parts)?;

@@ -1,0 +1,12 @@
+// first, get results of prev bool op
+@SP
+A=M
+D=M
+// pop
+@SP
+M=M-1
+@DONTJUMP.XYZ
+D;JLE
+@LOOP
+0;JMP
+(DONTJUMP.XYZ)
