@@ -6,3 +6,4 @@ target/
 debug/
 Cargo.lock
 tools/bin/*.dat
+*.asm
