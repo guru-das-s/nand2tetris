@@ -266,6 +266,11 @@ pub const LABEL: &str = r#"// LABEL
 (XYZ)
 "#;
 
+pub const GOTO: &str = r#"// GOTO
+@XYZ
+0;JMP
+"#;
+
 pub const IF_GOTO: &str = r#"// IF-GOTO
 // first, get results of prev bool op
 @SP

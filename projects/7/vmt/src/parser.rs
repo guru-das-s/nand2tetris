@@ -37,6 +37,7 @@ impl<'a> Parser<'a> {
             "or" => Ok(VmCmdType::Arithmetic(ArithmeticType::Or)),
             "not" => Ok(VmCmdType::Arithmetic(ArithmeticType::Not)),
             "label" => Ok(VmCmdType::Label),
+            "goto" => Ok(VmCmdType::Goto),
             "if-goto" => Ok(VmCmdType::IfGoto),
             _ => Err(format!("Invalid VM command type: {}", word)),
         }
@@ -86,9 +87,11 @@ impl<'a> Parser<'a> {
 
     fn parse_line_arg1(&self, t: &VmCmdType, parts: &Vec<&str>) -> Result<Option<Arg1>, String> {
         match t {
-            VmCmdType::Push | VmCmdType::Pop | VmCmdType::Label | VmCmdType::IfGoto => {
-                Ok(Some(self.parse_arg1(t, parts[1])?))
-            }
+            VmCmdType::Push
+            | VmCmdType::Pop
+            | VmCmdType::Label
+            | &VmCmdType::Goto
+            | VmCmdType::IfGoto => Ok(Some(self.parse_arg1(t, parts[1])?)),
             VmCmdType::Arithmetic(..) => Ok(None),
         }
     }

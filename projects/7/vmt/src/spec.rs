@@ -92,6 +92,7 @@ pub enum VmCmdType {
     Pop,
     Arithmetic(ArithmeticType),
     Label,
+    Goto,
     IfGoto,
 }
 
@@ -203,15 +204,19 @@ impl VmCommand {
         Ok(phrases::POP_PRE.to_string() + &seg_code + phrases::POP)
     }
 
-    fn code_label(&self) -> Result<String, String> {
+    fn code_label_goto(&self) -> Result<String, String> {
         let a = self
             .arg1
             .clone()
-            .ok_or(format!("Label command arg1 cannot be empty"))?;
+            .ok_or(format!("Label/Goto command arg1 cannot be empty"))?;
 
         match a {
             Arg1::Segment(_) => Err(format!("Label command arg1 cannot be a segment")),
-            Arg1::Symbol(label) => Ok(phrases::LABEL.replace("XYZ", &label)),
+            Arg1::Symbol(label) => match self.cmd {
+                VmCmdType::Label => Ok(phrases::LABEL.replace("XYZ", &label)),
+                VmCmdType::Goto => Ok(phrases::GOTO.replace("XYZ", &label)),
+                _ => Err(format!("Invalid VmCmdType for label/goto codegen")),
+            },
         }
     }
 
@@ -244,7 +249,7 @@ impl VmCommand {
             VmCmdType::Push => self.code_push(),
             VmCmdType::Pop => self.code_pop(),
             VmCmdType::Arithmetic(op) => op.code(),
-            VmCmdType::Label => self.code_label(),
+            VmCmdType::Label | VmCmdType::Goto => self.code_label_goto(),
             VmCmdType::IfGoto => self.code_ifgoto(),
         }
     }
