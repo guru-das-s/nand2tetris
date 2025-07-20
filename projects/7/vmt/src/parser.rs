@@ -56,7 +56,9 @@ impl<'a> Parser<'a> {
                 "temp" => Ok(Arg1::Segment(Segment::Temp)),
                 _ => Err(format!("Invalid segment: {}", word)),
             },
-            VmCmdType::Label | VmCmdType::IfGoto => Ok(Arg1::Symbol(word.to_string())),
+            VmCmdType::Label | &VmCmdType::Goto | VmCmdType::IfGoto => {
+                Ok(Arg1::Symbol(word.to_string()))
+            }
             _ => Err(format!(
                 "Arg1 parsing not applicable for invalid command type {:?}",
                 t
