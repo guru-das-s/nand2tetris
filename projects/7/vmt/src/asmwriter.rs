@@ -20,12 +20,35 @@ impl<'a> AsmWriter<'a> {
     }
 
     pub fn write(mut self) -> Result<(), Box<dyn Error>> {
+        let mut inside_a_function: Option<Arg1> = None;
+
         for vmcmd in self.vmcmds {
-            let mut asm_code = vmcmd.code()?;
+            // if vmcmd.is_function()
+            //      save its Arg1 to `function_seen`, an Option<Symbol>
+            if vmcmd.is_function() {
+                inside_a_function = vmcmd.arg1.clone();
+            }
+
+            // If we see a call or return when `function_seen` is None, throw
+            // error (those two can only occur within a function)
+            if inside_a_function == None && vmcmd.is_return_or_call() {
+                return Err("Call or Return command must be preceded by a Function".into());
+            }
+
+            // If we see a LABEL when `function_seen` is true, use phrase LABEL_IN_FUNC
+            //      ... I guess we need to pass `function_seen` as param to vmcmd.code(...)
+            // ^^^ is done now
+
+            // If we see a call, replace its `FUNC` phrase field with `function_seen`'s Symbol(String) function name
+            // ^^^ is done now
+
+            let mut asm_code = vmcmd.code(&inside_a_function)?;
 
             asm_code = if vmcmd
                 .arg1
+                .clone()
                 .is_some_and(|segment| segment == Arg1::Segment(Segment::Static))
+                || vmcmd.is_destination_cmd()
             {
                 asm_code.replace("FILE", self.filename)
             } else {
@@ -33,6 +56,12 @@ impl<'a> AsmWriter<'a> {
             };
 
             writeln!(self.file, "{}", asm_code)?;
+
+            if vmcmd.is_return() {
+                // We have handled `return`, so we are no longer in a function
+                // from the next command onwards
+                inside_a_function = None;
+            }
         }
         Ok(())
     }

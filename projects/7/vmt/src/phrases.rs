@@ -266,12 +266,22 @@ pub const LABEL: &str = r#"// LABEL
 (XYZ)
 "#;
 
+pub const LABEL_IN_FUNC: &str = r#"// LABEL_IN_FUNC
+(FILE.FUNC$XYZ)
+"#;
+
 pub const GOTO: &str = r#"// GOTO
 @XYZ
 0;JMP
 "#;
 
-pub const IF_GOTO: &str = r#"// IF-GOTO
+pub const GOTO_IN_FUNC: &str = r#"// GOTO_IN_FUNC
+@FILE.FUNC$XYZ
+0;JMP
+"#;
+
+// todo! Need IF_GOTO_IN_FUNC
+pub const IF_GOTO: &str = r#"// IF_GOTO
 // first, get results of prev bool op
 @SP
 A=M
@@ -284,4 +294,157 @@ D;JLE
 @LOOP
 0;JMP
 (DONTJUMP.XYZ)
+"#;
+
+pub const IF_GOTO_IN_FUNC: &str = r#"// IF_GOTO_IN_FUNC
+// first, get results of prev bool op
+@SP
+A=M
+D=M
+// pop
+@SP
+M=M-1
+@FILE.FUNC.DONTJUMP.XYZ
+D;JLE
+@FILE.FUNC$LOOP
+0;JMP
+(FILE.FUNC.DONTJUMP.XYZ)
+"#;
+
+pub const CALL: &str = r#"// CALL
+// Call: Save return address to stack
+@FILE.CALLER$ret.XYZ
+D=A
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save LCL to stack
+@LCL
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save ARG to stack
+@ARG
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save THIS to stack
+@THIS
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save THAT to stack
+@THAT
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Reposition ARG = SP - 5 - nArgs
+// Call: Repositioning ARG: SP already available above, save it
+D=M
+@5
+D=D-A
+@NUMARGS
+D=D-A
+@ARG
+M=D
+// Call: Set LCL to SP
+@SP
+D=M
+@LCL
+M=D
+// Call: Jump to CALLEE
+@CALLEE
+0;JMP
+(FILE.CALLER$ret.XYZ)
+"#;
+
+pub const FUNCTION: &str = r#"// FUN_CTION
+(FILE.FUNC)
+"#;
+
+pub const FUNCTION_LOCAL_VAR: &str = r#"// FUN_CTION LOCAL VARIABLE INIT
+@0
+D=A
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+"#;
+
+pub const RETURN: &str = r#"// RETURN
+// endFrame (R13) = LCL
+@LCL
+D=M
+@R13
+M=D
+// Handle retAddr at end without using temp variable
+// *ARG = pop(), well, just *(SP-1) really
+// because we will be repositioning SP next
+@SP
+M=M-1
+A=M
+D=M
+@ARG
+A=M
+M=D
+// SP = ARG + 1
+@ARG
+D=M
+@SP
+M=D+1
+// THAT = *(endFrame - 1)
+@R13
+M=M-1
+A=M
+D=M
+@THAT
+M=D
+// THIS = *(endFrame - 2)
+@R13
+M=M-1
+A=M
+D=M
+@THIS
+M=D
+// ARG = *(endFrame - 3)
+@R13
+M=M-1
+A=M
+D=M
+@ARG
+M=D
+// LCL = *(endFrame - 4)
+@R13
+M=M-1
+A=M
+D=M
+@LCL
+M=D
+// retAddr = *(endFrame - 5)
+@R13
+M=M-1
+A=M
+// goto retAddr
+0;JMP
 "#;

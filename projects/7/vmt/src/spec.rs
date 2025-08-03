@@ -94,6 +94,9 @@ pub enum VmCmdType {
     Label,
     Goto,
     IfGoto,
+    Call,
+    Function,
+    Return,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -111,6 +114,30 @@ pub struct VmCommand {
 impl VmCommand {
     pub fn new(cmd: VmCmdType, arg1: Option<Arg1>, arg2: Option<u16>) -> Self {
         Self { cmd, arg1, arg2 }
+    }
+
+    pub fn is_function(&self) -> bool {
+        self.cmd == VmCmdType::Function
+    }
+
+    pub fn is_return(&self) -> bool {
+        self.cmd == VmCmdType::Return
+    }
+
+    pub fn is_return_or_call(&self) -> bool {
+        self.cmd == VmCmdType::Return || self.cmd == VmCmdType::Call
+    }
+
+    /// Need to replace "FILE" in command's phrase if true
+    pub fn is_destination_cmd(&self) -> bool {
+        match self.cmd {
+            VmCmdType::Call
+            | VmCmdType::Function
+            | VmCmdType::Label
+            | VmCmdType::Goto
+            | VmCmdType::IfGoto => true,
+            _ => false,
+        }
     }
 
     pub fn segment_to_phrase(&self, segment: &Segment) -> Result<String, String> {
@@ -159,7 +186,7 @@ impl VmCommand {
     pub fn to_phrase(&self, arg1: &Arg1) -> Result<String, String> {
         match arg1 {
             Arg1::Segment(s) => self.segment_to_phrase(s),
-            Arg1::Symbol(_) => todo!(),
+            Arg1::Symbol(_) => Err(format!("Cannot convert symbol to phrase")),
         }
     }
 
@@ -204,23 +231,35 @@ impl VmCommand {
         Ok(phrases::POP_PRE.to_string() + &seg_code + phrases::POP)
     }
 
-    fn code_label_goto(&self) -> Result<String, String> {
+    fn code_label_goto(&self, in_a_func: &Option<Arg1>) -> Result<String, String> {
         let a = self
             .arg1
             .clone()
             .ok_or(format!("Label/Goto command arg1 cannot be empty"))?;
 
+        let label_phrase = if let Some(Arg1::Symbol(func_name)) = in_a_func {
+            &phrases::LABEL_IN_FUNC.replace("FUNC", func_name.as_str())
+        } else {
+            phrases::LABEL
+        };
+
+        let goto_phrase = if let Some(Arg1::Symbol(func_name)) = in_a_func {
+            &phrases::GOTO_IN_FUNC.replace("FUNC", func_name.as_str())
+        } else {
+            phrases::GOTO
+        };
+
         match a {
             Arg1::Segment(_) => Err(format!("Label command arg1 cannot be a segment")),
             Arg1::Symbol(label) => match self.cmd {
-                VmCmdType::Label => Ok(phrases::LABEL.replace("XYZ", &label)),
-                VmCmdType::Goto => Ok(phrases::GOTO.replace("XYZ", &label)),
+                VmCmdType::Label => Ok(label_phrase.replace("XYZ", &label)),
+                VmCmdType::Goto => Ok(goto_phrase.replace("XYZ", &label)),
                 _ => Err(format!("Invalid VmCmdType for label/goto codegen")),
             },
         }
     }
 
-    fn code_ifgoto(&self) -> Result<String, String> {
+    fn code_ifgoto(&self, in_a_func: &Option<Arg1>) -> Result<String, String> {
         let a = self
             .arg1
             .clone()
@@ -232,10 +271,16 @@ impl VmCommand {
 
         let mut i = i_m.lock().unwrap();
 
+        let if_goto_phrase = if let Some(Arg1::Symbol(func_name)) = in_a_func {
+            &phrases::IF_GOTO_IN_FUNC.replace("FUNC", func_name.as_str())
+        } else {
+            phrases::IF_GOTO
+        };
+
         match a {
             Arg1::Segment(_) => Err(format!("If-goto command arg1 cannot be a segment")),
             Arg1::Symbol(label) => {
-                let s = phrases::IF_GOTO
+                let s = if_goto_phrase
                     .replace("XYZ", format!("{}", i).as_str())
                     .replace("LOOP", &label);
                 *i += 1;
@@ -244,13 +289,72 @@ impl VmCommand {
         }
     }
 
-    pub fn code(&self) -> Result<String, String> {
+    fn code_call(&self, caller: &Option<Arg1>) -> Result<String, String> {
+        let callee = self
+            .arg1
+            .clone()
+            .ok_or(format!("Call command arg1 cannot be empty"))?;
+
+        static ONCE: OnceLock<Mutex<u16>> = OnceLock::new();
+
+        let i_m = ONCE.get_or_init(|| Mutex::new(0));
+
+        let mut i = i_m.lock().unwrap();
+
+        let mut call_phrase_i = phrases::CALL.replace("XYZ", format!("{}", i).as_str());
+
+        if let Some(Arg1::Symbol(caller_func_name)) = caller {
+            call_phrase_i = call_phrase_i.replace("CALLER", &caller_func_name);
+
+            if let Arg1::Symbol(callee_func_name) = callee {
+                // Increment i for next time
+                *i += 1;
+
+                return Ok(call_phrase_i.replace("CALLEE", &callee_func_name));
+            }
+        }
+
+        Err(format!(
+            "Caller and/or Callee not parsed correctly for Call command"
+        ))
+    }
+
+    fn code_function(&self) -> Result<String, String> {
+        let num_local_vars = self
+            .arg2
+            .ok_or(format!("Function does not have nVars specified"))?;
+
+        let func_name = self
+            .arg1
+            .as_ref()
+            .and_then(|a| {
+                if let Arg1::Symbol(fname) = a {
+                    Some(fname)
+                } else {
+                    None
+                }
+            })
+            .ok_or(format!("Function does not have name specified"))?;
+
+        let mut function_phrase = phrases::FUNCTION.replace("FUNC", func_name);
+        function_phrase += &phrases::FUNCTION_LOCAL_VAR.repeat(num_local_vars as usize);
+        Ok(function_phrase)
+    }
+
+    fn code_return(&self) -> Result<String, String> {
+        Ok(phrases::RETURN.to_string())
+    }
+
+    pub fn code(&self, in_a_func: &Option<Arg1>) -> Result<String, String> {
         match self.cmd {
             VmCmdType::Push => self.code_push(),
             VmCmdType::Pop => self.code_pop(),
             VmCmdType::Arithmetic(op) => op.code(),
-            VmCmdType::Label | VmCmdType::Goto => self.code_label_goto(),
-            VmCmdType::IfGoto => self.code_ifgoto(),
+            VmCmdType::Label | VmCmdType::Goto => self.code_label_goto(&in_a_func),
+            VmCmdType::IfGoto => self.code_ifgoto(&in_a_func),
+            VmCmdType::Call => self.code_call(&in_a_func),
+            VmCmdType::Function => self.code_function(),
+            VmCmdType::Return => self.code_return(),
         }
     }
 }
