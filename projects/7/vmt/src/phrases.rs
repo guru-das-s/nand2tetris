@@ -266,8 +266,8 @@ pub const LABEL: &str = r#"// LABEL
 (XYZ)
 "#;
 
-pub const LABEL_IN_FUNC: &str = r#"// LABEL_IN_FUNC
-(FILE.FUNC$XYZ)
+pub const LABEL_IN_FUNC: &str = r#"// LABEL_IN_FUN_C
+(FUNC$XYZ)
 "#;
 
 pub const GOTO: &str = r#"// GOTO
@@ -275,12 +275,11 @@ pub const GOTO: &str = r#"// GOTO
 0;JMP
 "#;
 
-pub const GOTO_IN_FUNC: &str = r#"// GOTO_IN_FUNC
-@FILE.FUNC$XYZ
+pub const GOTO_IN_FUNC: &str = r#"// GOTO_IN_FUN_C
+@FUNC$XYZ
 0;JMP
 "#;
 
-// todo! Need IF_GOTO_IN_FUNC
 pub const IF_GOTO: &str = r#"// IF_GOTO
 // first, get results of prev bool op
 @SP
@@ -296,7 +295,7 @@ D;JLE
 (DONTJUMP.XYZ)
 "#;
 
-pub const IF_GOTO_IN_FUNC: &str = r#"// IF_GOTO_IN_FUNC
+pub const IF_GOTO_IN_FUNC: &str = r#"// IF_GOTO_IN_FUN_C
 // first, get results of prev bool op
 @SP
 A=M
@@ -304,16 +303,16 @@ D=M
 // pop
 @SP
 M=M-1
-@FILE.FUNC.DONTJUMP.XYZ
+@FUNC.DONTJUMP.XYZ
 D;JLE
-@FILE.FUNC$LOOP
+@FUNC$LOOP
 0;JMP
-(FILE.FUNC.DONTJUMP.XYZ)
+(FUNC.DONTJUMP.XYZ)
 "#;
 
 pub const CALL: &str = r#"// CALL
 // Call: Save return address to stack
-@FILE.CALLER$ret.XYZ
+@CALLER$ret.XYZ
 D=A
 @SP
 A=M
@@ -374,11 +373,11 @@ M=D
 // Call: Jump to CALLEE
 @CALLEE
 0;JMP
-(FILE.CALLER$ret.XYZ)
+(CALLER$ret.XYZ)
 "#;
 
 pub const FUNCTION: &str = r#"// FUN_CTION
-(FILE.FUNC)
+(FUNC)
 "#;
 
 pub const FUNCTION_LOCAL_VAR: &str = r#"// FUN_CTION LOCAL VARIABLE INIT
