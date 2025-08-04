@@ -295,6 +295,10 @@ impl VmCommand {
             .clone()
             .ok_or(format!("Call command arg1 cannot be empty"))?;
 
+        let num_args = self
+            .arg2
+            .ok_or(format!("Call command does not have numArgs specified"))?;
+
         static ONCE: OnceLock<Mutex<u16>> = OnceLock::new();
 
         let i_m = ONCE.get_or_init(|| Mutex::new(0));
@@ -305,6 +309,7 @@ impl VmCommand {
 
         if let Some(Arg1::Symbol(caller_func_name)) = caller {
             call_phrase_i = call_phrase_i.replace("CALLER", &caller_func_name);
+            call_phrase_i = call_phrase_i.replace("NUMARGS", format!("{}", num_args).as_str());
 
             if let Arg1::Symbol(callee_func_name) = callee {
                 // Increment i for next time
