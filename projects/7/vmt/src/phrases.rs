@@ -397,7 +397,12 @@ pub const RETURN: &str = r#"// RETURN
 D=M
 @R13
 M=D
-// Handle retAddr at end without using temp variable
+// retAddr (R14) = *(endFrame - 5)
+@5
+A=D-A
+D=M
+@R14
+M=D
 // *ARG = pop(), well, just *(SP-1) really
 // because we will be repositioning SP next
 @SP
@@ -440,10 +445,8 @@ A=M
 D=M
 @LCL
 M=D
-// retAddr = *(endFrame - 5)
-@R13
-M=M-1
-A=M
 // goto retAddr
+@R14
+A=M
 0;JMP
 "#;
