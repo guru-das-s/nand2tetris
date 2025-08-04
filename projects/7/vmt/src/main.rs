@@ -15,9 +15,9 @@ mod spec;
 /// Converts Hack VM files to Hack assembly
 #[command(version)]
 struct Args {
-    /// Path to Hack VM file (e.g. SimpleAdd.vm)
+    /// Path to Hack VM file (e.g. SimpleAdd.vm) or directory
     #[arg(short, long)]
-    filename: PathBuf,
+    input_path: PathBuf,
 
     /// Output filename (e.g. SimpleAdd.asm)
     #[arg(short, long)]
@@ -26,32 +26,54 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut args = Args::parse();
+    let mut vm_files: Vec<PathBuf> = Vec::new();
+
+    if args.input_path.is_dir() {
+        vm_files = std::fs::read_dir(&args.input_path)?
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .filter(|p| p.is_file() && p.extension().map_or(false, |ext| ext == "vm"))
+            .collect();
+    } else {
+        vm_files.push(args.input_path.clone());
+    }
 
     if args.output.is_none() {
-        args.output = Some(args.filename.with_extension("asm"));
+        args.output = if args.input_path.is_dir() {
+            let dir_name = args
+                .input_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("Could not determine directory name");
+            Some(args.input_path.join(format!("{}.asm", dir_name)))
+        } else {
+            Some(args.input_path.with_extension("asm"))
+        }
     }
 
     let output_file = File::create(args.output.as_ref().unwrap())?;
-    let writer = BufWriter::new(output_file);
+    let mut writer = BufWriter::new(output_file);
 
-    let lines: Vec<_> = read_lines(args.filename)?.collect::<Result<_, _>>()?;
+    for vm_file in vm_files {
+        let lines: Vec<_> = read_lines(vm_file)?.collect::<Result<_, _>>()?;
 
-    let mut p = parser::Parser::new(lines.as_ref());
-    p.parse()?;
-    p.print_parsed();
+        let mut p = parser::Parser::new(lines.as_ref());
+        p.parse()?;
+        p.print_parsed();
 
-    let w = asmwriter::AsmWriter::new(
-        p.parsed,
-        writer,
-        args.output
-            .as_ref()
-            .unwrap()
-            .file_stem()
-            .unwrap()
-            .to_str()
-            .unwrap(),
-    );
-    w.write()?;
+        let mut w = asmwriter::AsmWriter::new(
+            p.parsed,
+            &mut writer,
+            args.output
+                .as_ref()
+                .unwrap()
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap(),
+        );
+        w.write()?;
+    }
 
     Ok(())
 }

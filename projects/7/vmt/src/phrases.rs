@@ -450,3 +450,10 @@ M=D
 A=M
 0;JMP
 "#;
+
+pub const BOOTSTRAP: &str = r#"// BOOTSTRAP
+@256
+D=A
+@SP
+M=D
+"#;

@@ -7,11 +7,11 @@ use crate::spec::*;
 
 pub struct AsmWriter<'a> {
     vmcmds: Vec<VmCommand>,
-    file: BufWriter<File>,
+    file: &'a mut BufWriter<File>,
     filename: &'a str,
 }
 impl<'a> AsmWriter<'a> {
-    pub fn new(cmds: Vec<VmCommand>, file: BufWriter<File>, filename: &'a str) -> Self {
+    pub fn new(cmds: Vec<VmCommand>, file: &'a mut BufWriter<File>, filename: &'a str) -> Self {
         Self {
             vmcmds: cmds,
             file: file,
@@ -19,10 +19,10 @@ impl<'a> AsmWriter<'a> {
         }
     }
 
-    pub fn write(mut self) -> Result<(), Box<dyn Error>> {
+    pub fn write(&mut self) -> Result<(), Box<dyn Error>> {
         let mut inside_a_function: Option<Arg1> = None;
 
-        for vmcmd in self.vmcmds {
+        for vmcmd in &self.vmcmds {
             // if vmcmd.is_function()
             //      save its Arg1 to `function_seen`, an Option<Symbol>
             if vmcmd.is_function() {
