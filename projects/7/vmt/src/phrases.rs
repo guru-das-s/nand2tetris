@@ -107,6 +107,7 @@ M=!M
 M=M+1
 "#;
 
+// todo! Need to add FILE for the intra-phrase labels
 pub const LT: &str = r#"// LT
 @SP
 M=M-1
@@ -283,13 +284,11 @@ pub const GOTO_IN_FUNC: &str = r#"// GOTO_IN_FUN_C
 pub const IF_GOTO: &str = r#"// IF_GOTO
 // first, get results of prev bool op
 @SP
+M=M-1
 A=M
 D=M
-// pop
-@SP
-M=M-1
 @DONTJUMP.XYZ
-D;JLE
+D;JEQ
 @LOOP
 0;JMP
 (DONTJUMP.XYZ)
@@ -298,13 +297,11 @@ D;JLE
 pub const IF_GOTO_IN_FUNC: &str = r#"// IF_GOTO_IN_FUN_C
 // first, get results of prev bool op
 @SP
+M=M-1
 A=M
 D=M
-// pop
-@SP
-M=M-1
 @FUNC.DONTJUMP.XYZ
-D;JLE
+D;JEQ
 @FUNC$LOOP
 0;JMP
 (FUNC.DONTJUMP.XYZ)
