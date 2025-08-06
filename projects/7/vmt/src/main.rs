@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     for vm_file in vm_files {
-        let lines: Vec<_> = read_lines(vm_file)?.collect::<Result<_, _>>()?;
+        let lines: Vec<_> = read_lines(&vm_file)?.collect::<Result<_, _>>()?;
 
         let mut p = parser::Parser::new(lines.as_ref());
         p.parse()?;
@@ -68,13 +68,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut w = asmwriter::AsmWriter::new(
             p.parsed,
             &mut writer,
-            args.output
-                .as_ref()
-                .unwrap()
-                .file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap(),
+            vm_file.file_stem().unwrap().to_str().unwrap(),
         );
         w.write()?;
     }
