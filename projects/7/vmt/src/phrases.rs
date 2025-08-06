@@ -456,4 +456,67 @@ pub const BOOTSTRAP: &str = r#"// BOOTSTRAP
 D=A
 @SP
 M=D
+// Call Sys.init 0
+@CALLER$ret.0
+D=A
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save LCL to stack
+@LCL
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save ARG to stack
+@ARG
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save THIS to stack
+@THIS
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Save THAT to stack
+@THAT
+D=M
+@SP
+A=M
+M=D
+// Increment SP
+@SP
+M=M+1
+// Call: Reposition ARG = SP - 5 - nArgs = SP - 5 - 0
+// Call: Repositioning ARG: SP already available above, save it
+D=M
+@5
+D=D-A
+@0
+D=D-A
+@ARG
+M=D
+// Call: Set LCL to SP
+@SP
+D=M
+@LCL
+M=D
+// Call: Jump to Sys.init
+@Sys.init
+0;JMP
+(CALLER$ret.0)
 "#;

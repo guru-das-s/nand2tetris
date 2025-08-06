@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::error::Error;
 use std::fs::File;
-use std::io::{self, BufRead, BufWriter};
+use std::io::{self, BufRead, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 mod asmwriter;
@@ -53,6 +53,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let output_file = File::create(args.output.as_ref().unwrap())?;
     let mut writer = BufWriter::new(output_file);
+
+    if args.input_path.is_dir() {
+        writeln!(writer, "{}", phrases::BOOTSTRAP)?;
+    }
 
     for vm_file in vm_files {
         let lines: Vec<_> = read_lines(vm_file)?.collect::<Result<_, _>>()?;
