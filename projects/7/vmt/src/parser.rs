@@ -106,11 +106,19 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_line_arg2(&self, a: &Option<Arg1>, parts: &Vec<&str>) -> Result<Option<u16>, String> {
-        if parts.len() != MAX_NUM_VM_CMD_PARTS {
-            Ok(None)
-        } else {
-            self.parse_arg2(a, parts[2])
+    fn parse_line_arg2(
+        &self,
+        a: &Option<Arg1>,
+        t: &VmCmdType,
+        parts: &Vec<&str>,
+    ) -> Result<Option<u16>, String> {
+        match t {
+            VmCmdType::Goto
+            | VmCmdType::Label
+            | VmCmdType::Arithmetic(_)
+            | VmCmdType::IfGoto
+            | VmCmdType::Return => Ok(None),
+            _ => self.parse_arg2(a, parts[2]),
         }
     }
 
@@ -125,7 +133,7 @@ impl<'a> Parser<'a> {
 
         let cmd_type = self.parse_line_cmd_type(parts[0])?;
         let arg1 = self.parse_line_arg1(&cmd_type, &parts)?;
-        let i = self.parse_line_arg2(&arg1, &parts)?;
+        let i = self.parse_line_arg2(&arg1, &cmd_type, &parts)?;
 
         Ok(Some(VmCommand::new(cmd_type, arg1, i)))
     }
