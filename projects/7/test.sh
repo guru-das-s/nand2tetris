@@ -11,7 +11,7 @@ trap cleanup EXIT
 
 run_vmt() {
 	local vm_file="$1"
-	cargo run --release --bin vmt -- -f $vm_file
+	cargo run --release --bin vmt -- -i $vm_file
 }
 
 run_tst() {
