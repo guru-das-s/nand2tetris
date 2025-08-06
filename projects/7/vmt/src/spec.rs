@@ -120,14 +120,6 @@ impl VmCommand {
         self.cmd == VmCmdType::Function
     }
 
-    pub fn is_return(&self) -> bool {
-        self.cmd == VmCmdType::Return
-    }
-
-    pub fn is_return_or_call(&self) -> bool {
-        self.cmd == VmCmdType::Return || self.cmd == VmCmdType::Call
-    }
-
     /// Need to replace "FILE" in command's phrase if true
     pub fn is_destination_cmd(&self) -> bool {
         match self.cmd {

@@ -29,12 +29,6 @@ impl<'a> AsmWriter<'a> {
                 inside_a_function = vmcmd.arg1.clone();
             }
 
-            // If we see a call or return when `function_seen` is None, throw
-            // error (those two can only occur within a function)
-            if inside_a_function == None && vmcmd.is_return_or_call() {
-                return Err("Call or Return command must be preceded by a Function".into());
-            }
-
             // If we see a LABEL when `function_seen` is true, use phrase LABEL_IN_FUNC
             //      ... I guess we need to pass `function_seen` as param to vmcmd.code(...)
             // ^^^ is done now
@@ -56,12 +50,6 @@ impl<'a> AsmWriter<'a> {
             };
 
             writeln!(self.file, "{}", asm_code)?;
-
-            if vmcmd.is_return() {
-                // We have handled `return`, so we are no longer in a function
-                // from the next command onwards
-                inside_a_function = None;
-            }
         }
         Ok(())
     }
