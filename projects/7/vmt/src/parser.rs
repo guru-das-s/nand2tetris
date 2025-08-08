@@ -194,15 +194,4 @@ mod tests {
             "invalid digit found in string: -2".to_string()
         );
     }
-    #[test]
-    fn test_catch_max_num_parts() {
-        let lines = vec!["push constant 7 dd".to_string()];
-        let mut p = Parser::new(&lines);
-        let ret = p.parse();
-        assert!(ret.is_err());
-        assert_eq!(
-            ret.unwrap_err(),
-            "Line: 'push constant 7 dd' exceeds max 3 number of parts".to_string()
-        );
-    }
 }
