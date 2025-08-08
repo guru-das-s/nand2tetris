@@ -96,18 +96,17 @@ D=D-M
 @SP
 A=M
 M=-1
-@ISEQUAL.XYZ
+@FILE.ISEQUAL.XYZ
 D;JEQ
 @SP
 A=M
 M=!M
-(ISEQUAL.XYZ)
+(FILE.ISEQUAL.XYZ)
 // Increment SP
 @SP
 M=M+1
 "#;
 
-// todo! Need to add FILE for the intra-phrase labels
 pub const LT: &str = r#"// LT
 @SP
 M=M-1
@@ -120,12 +119,12 @@ D=D-M
 @SP
 A=M
 M=-1
-@ISNOTLESSTHAN.XYZ
+@FILE.ISNOTLESSTHAN.XYZ
 D;JGT
 @SP
 A=M
 M=!M
-(ISNOTLESSTHAN.XYZ)
+(FILE.ISNOTLESSTHAN.XYZ)
 // Increment SP
 @SP
 M=M+1
@@ -143,12 +142,12 @@ D=D-M
 @SP
 A=M
 M=-1
-@ISNOTGREATERTHAN.XYZ
+@FILE.ISNOTGREATERTHAN.XYZ
 D;JLT
 @SP
 A=M
 M=!M
-(ISNOTGREATERTHAN.XYZ)
+(FILE.ISNOTGREATERTHAN.XYZ)
 // Increment SP
 @SP
 M=M+1

@@ -120,18 +120,6 @@ impl VmCommand {
         self.cmd == VmCmdType::Function
     }
 
-    /// Need to replace "FILE" in command's phrase if true
-    pub fn is_destination_cmd(&self) -> bool {
-        match self.cmd {
-            VmCmdType::Call
-            | VmCmdType::Function
-            | VmCmdType::Label
-            | VmCmdType::Goto
-            | VmCmdType::IfGoto => true,
-            _ => false,
-        }
-    }
-
     pub fn segment_to_phrase(&self, segment: &Segment) -> Result<String, String> {
         let cmd = self.cmd;
 
